@@ -1,20 +1,21 @@
 #pragma once
-#include <Arduino.h>
-// #include <inttypes.h>
+#include <printf.h>
 #include <stdarg.h>
-#include <stdint.h>
 
 namespace anneo {
 
-// logger 1.1.0
+// logger 1.2.0
 // Minimal logging library for embedded devices
 // https://github.com/joseangeljimenez/logger
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>
 
+// Depends on the great tiny printf library by Marco Paland
+// https://github.com/mpaland/printf
+
 // Based on the Log library for Arduino by Thijs Elenbaas
 // https://github.com/thijse/Arduino-Log
 
-using printFunction = void (*)(Print*);
+using printFunction = void (*)();
 
 const int LOG_LEVEL_OFF = 0;
 const int LOG_LEVEL_FATAL = 1;
@@ -24,26 +25,16 @@ const int LOG_LEVEL_INFO = 4;
 const int LOG_LEVEL_DEBUG = 5;
 const int LOG_LEVEL_ALL = LOG_LEVEL_DEBUG;
 
-// Available formats
-// %s	replace with an string (char*)
-// %c	replace with an character
-// %d	replace with an integer value
-// %D	replace with a double value
-// %l	replace with an long value
-// %x	replace and convert integer value into hex
-// %X	like %x but combine with 0x123AB
-// %b	replace and convert integer value into binary
-// %B	like %x but combine with 0b10100011
-// %t	replace and convert boolean value into "t" or "f"
-// %T	like %t but convert into "true" or "false"
-
 class Logger {
    public:
     // Default constructor
-    Logger() : _level(LOG_LEVEL_OFF), _showLevel(true), _output(nullptr) {}
+    Logger() : _level(LOG_LEVEL_OFF), _showLevel(true) {}
 
     // Setup
-    void setup(int level, Print* output, bool showLevel = true);
+    inline void setup(int level, bool showLevel = true) {
+        this->level(level);
+        this->showLevel(showLevel);
+    }
 
     // Log level
     inline void level(int value) { _level = constrain(value, LOG_LEVEL_OFF, LOG_LEVEL_ALL); }
@@ -90,40 +81,32 @@ class Logger {
     }
 
    protected:
-    void print(const char* format, va_list args);
-    void printFormat(const char format, va_list* args);
-
     template <class T>
     void printLevel(int level, T msg, ...) {
         if (level > _level) {
             return;
         }
         if (_prefix) {
-            _prefix(_output);
+            _prefix();
         }
         if (_showLevel) {
             static const char levels[] = "FEWID";
-            _output->print(levels[level - 1]);
-            _output->print(": ");
+            printf_("%c: ", levels[level - 1]);
         }
         va_list args;
         va_start(args, msg);
-        print(msg, args);
+        vprintf_(msg, args);
         if (_suffix) {
-            _suffix(_output);
+            _suffix();
         }
-        _output->print("\n");
+        printf_("\n");
     }
 
     int _level;
     bool _showLevel;
-    Print* _output;
 
     printFunction _prefix;
     printFunction _suffix;
 };
-
-// Singleton
-extern Logger logger;
 
 }  // namespace anneo
