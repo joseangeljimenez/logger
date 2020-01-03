@@ -25,6 +25,12 @@ const int LOG_LEVEL_INFO = 4;
 const int LOG_LEVEL_DEBUG = 5;
 const int LOG_LEVEL_ALL = LOG_LEVEL_DEBUG;
 
+// Helper function
+template <class T>
+T _constrain(T value, T low, T high) {
+    return value < low ? low : (value > high ? high : value);
+}
+
 class Logger {
    public:
     // Default constructor
@@ -37,7 +43,7 @@ class Logger {
     }
 
     // Log level
-    inline void level(int value) { _level = constrain(value, LOG_LEVEL_OFF, LOG_LEVEL_ALL); }
+    inline void level(int value) { _level = _constrain(value, LOG_LEVEL_OFF, LOG_LEVEL_ALL); }
     inline int level() const { return _level; }
 
     // Show log level
